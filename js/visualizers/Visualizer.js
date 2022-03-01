@@ -12,11 +12,11 @@ export default class Visualizer {
   }
 
   get width() {
-    return this.#canvas.getBoundingClientRect().width;
+    return this.#canvas.width;
   }
 
   get height() {
-    return this.#canvas.getBoundingClientRect().height;
+    return this.#canvas.height;
   }
 
   get amplitudes() {

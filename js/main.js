@@ -2,23 +2,9 @@ import Oscilloscope from "./visualizers/Oscilloscope.js";
 import FrequencyDisplay from "./visualizers/FrequencyDisplay.js";
 import Eraser from "./visualizers/Eraser.js";
 import DataProvider from "./DataProvider.js";
+import improveBrowserCompatibility from "./improveBrowserCompatibility.js";
+import prepareCanvas from "./prepareCanvas.js";
 
-// Hacks to deal with different function names in different browsers
-window.requestAnimFrame = (function () {
-  return (
-    window.requestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    function (callback) {
-      window.setTimeout(callback, 1000 / 60);
-    }
-  );
-})();
-window.AudioContext = (function () {
-  return (
-    window.webkitAudioContext || window.AudioContext || window.mozAudioContext
-  );
-})();
 // Global Variables for Audio
 let audioContext;
 let sourceNode;
@@ -31,64 +17,60 @@ let sampleSize = 1024; // number of samples to collect before analyzing data
 let audioUrl = "./media/predatory-mollusc-jingle.ogg";
 // Global variables for the Graphics
 let canvasId = "canvas";
-let ctx;
 
-ctx = document.querySelector("#canvas").getContext("2d");
+improveBrowserCompatibility();
+prepareCanvas(canvasId);
 
 // When the Start button is clicked, finish setting up the audio nodes, play the sound,
 // gather samples for the analysis, update the canvas
-document.querySelector("#start_button").addEventListener("click", function (e) {
-  // the AudioContext is the primary 'container' for all your audio node objects
-  if (!audioContext) {
-    try {
-      audioContext = new AudioContext();
-    } catch (e) {
-      alert("Web Audio API is not supported in this browser");
-    }
-  }
-
+document.getElementById(canvasId).addEventListener("click", function (e) {
   e.preventDefault();
-  // Set up the audio Analyser, the Source Buffer and javascriptNode
-  setupAudioNodes();
-  const dataProvider = new DataProvider({ analyzer });
-  const eraser = new Eraser({ canvasId, dataProvider });
-  const frequencyDisplay = new FrequencyDisplay({
-    canvasId,
-    dataProvider,
-  });
-  const oscilloscope = new Oscilloscope({
-    canvasId,
-    dataProvider,
-  });
-  // setup the event handler that is triggered every time enough samples have been collected
-  // trigger the audio analysis and draw the results
-  javascriptNode.onaudioprocess = function () {
-    // draw the display if the audio is playing
-    if (audioPlaying) {
-      requestAnimFrame(() => {
-        dataProvider.update();
-        eraser.draw();
-        frequencyDisplay.draw();
-        oscilloscope.draw();
-      });
+  if (!audioPlaying) {
+    // Set up the audio Analyser, the Source Buffer and javascriptNode
+    setupAudioNodes();
+    const dataProvider = new DataProvider({ analyzer });
+    const eraser = new Eraser({ canvasId, dataProvider });
+    const frequencyDisplay = new FrequencyDisplay({
+      canvasId,
+      dataProvider,
+    });
+    const oscilloscope = new Oscilloscope({
+      canvasId,
+      dataProvider,
+    });
+    // setup the event handler that is triggered every time enough samples have been collected
+    // trigger the audio analysis and draw the results
+    javascriptNode.onaudioprocess = function () {
+      // draw the display if the audio is playing
+      if (audioPlaying) {
+        requestAnimFrame(() => {
+          dataProvider.update();
+          eraser.draw();
+          frequencyDisplay.draw();
+          oscilloscope.draw();
+        });
+      }
+    };
+    // Load the Audio the first time through, otherwise play it from the buffer
+    if (audioData == null) {
+      loadSound(audioUrl);
+    } else {
+      playSound(audioData);
     }
-  };
-  // Load the Audio the first time through, otherwise play it from the buffer
-  if (audioData == null) {
-    loadSound(audioUrl);
   } else {
-    playSound(audioData);
+    // if audio is currently playing
+    audioContext.close();
+    sourceNode.stop(0);
+    audioPlaying = false;
   }
-});
-
-// Stop the audio playing
-document.querySelector("#stop_button").addEventListener("click", function (e) {
-  e.preventDefault();
-  sourceNode.stop(0);
-  audioPlaying = false;
 });
 
 function setupAudioNodes() {
+  try {
+    audioContext = new AudioContext();
+  } catch (e) {
+    alert("Web Audio API is not supported in this browser");
+  }
   sourceNode = audioContext.createBufferSource();
   analyzer = audioContext.createAnalyser();
   analyzer.fftSize = 256;
@@ -103,7 +85,6 @@ function setupAudioNodes() {
 // Load the audio from the URL via Ajax and store it in global variable audioData
 // Note that the audio load is asynchronous
 function loadSound(url) {
-  document.getElementById("msg").textContent = "Loading audio...";
   let request = new XMLHttpRequest();
   request.open("GET", url, true);
   request.responseType = "arraybuffer";
@@ -112,8 +93,6 @@ function loadSound(url) {
     audioContext.decodeAudioData(
       request.response,
       function (buffer) {
-        document.getElementById("msg").textContent =
-          "Audio sample download finished";
         audioData = buffer;
         playSound(audioData);
       },
