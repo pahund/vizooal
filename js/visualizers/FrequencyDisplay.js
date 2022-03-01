@@ -1,30 +1,16 @@
 import Visualizer from "./Visualizer.js";
 
 export default class FrequencyDisplay extends Visualizer {
-  dataArray = null;
-
-  constructor(options) {
-    super(options);
-    this.dataArray = new Uint8Array(this.analyzerNode.frequencyBinCount);
-  }
-
   draw() {
-    const { ctx, width, height } = this.getDrawingVariables();
-    this.analyzerNode.getByteFrequencyData(this.dataArray);
-    const bufferLength = this.analyzerNode.frequencyBinCount;
-
-    const barWidth = width / bufferLength;
+    const len = this.frequencies.length;
+    const barWidth = this.width / len;
     let barHeight = 0;
     let x = 0;
-
-    for (let i = 0; i < bufferLength; i++) {
-      const val = this.dataArray[i];
-      barHeight = (val / 256) * height;
-
-      ctx.fillStyle = `rgb(${val},${val},${val})`;
-      // ctx.fillRect(x, height - barHeight / 2, barWidth, barHeight / 2);
-      ctx.fillRect(x, height - barHeight, barWidth, height);
-
+    for (let i = 0; i < len; i++) {
+      const val = this.frequencies[i];
+      barHeight = (val / 256) * this.height;
+      this.ctx.fillStyle = `rgb(${val},${val},${val})`;
+      this.ctx.fillRect(x, this.height - barHeight, barWidth, this.height);
       x += barWidth;
     }
   }

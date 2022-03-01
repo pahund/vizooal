@@ -1,15 +1,29 @@
 export default class Visualizer {
-  canvas = null;
-  analyzerNode = null;
+  #canvas = null;
+  #dataProvider = null;
 
-  constructor({ canvasId, analyzerNode }) {
-    this.canvas = document.getElementById(canvasId);
-    this.analyzerNode = analyzerNode;
+  constructor({ canvasId, dataProvider }) {
+    this.#canvas = document.getElementById(canvasId);
+    this.#dataProvider = dataProvider;
   }
 
-  getDrawingVariables() {
-    const ctx = this.canvas.getContext("2d");
-    const { width, height } = this.canvas.getBoundingClientRect();
-    return { ctx, width, height };
+  get ctx() {
+    return this.#canvas.getContext("2d");
+  }
+
+  get width() {
+    return this.#canvas.getBoundingClientRect().width;
+  }
+
+  get height() {
+    return this.#canvas.getBoundingClientRect().height;
+  }
+
+  get amplitudes() {
+    return this.#dataProvider.amplitudes;
+  }
+
+  get frequencies() {
+    return this.#dataProvider.frequencies;
   }
 }

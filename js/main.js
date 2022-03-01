@@ -1,6 +1,7 @@
 import Oscilloscope from "./visualizers/Oscilloscope.js";
 import FrequencyDisplay from "./visualizers/FrequencyDisplay.js";
 import Eraser from "./visualizers/Eraser.js";
+import DataProvider from "./DataProvider.js";
 
 // Hacks to deal with different function names in different browsers
 window.requestAnimFrame = (function () {
@@ -21,7 +22,7 @@ window.AudioContext = (function () {
 // Global Variables for Audio
 let audioContext;
 let sourceNode;
-let analyzerNode;
+let analyzer;
 let javascriptNode;
 let audioData = null;
 let audioPlaying = false;
@@ -49,14 +50,15 @@ document.querySelector("#start_button").addEventListener("click", function (e) {
   e.preventDefault();
   // Set up the audio Analyser, the Source Buffer and javascriptNode
   setupAudioNodes();
-  const eraser = new Eraser({ canvasId });
+  const dataProvider = new DataProvider({ analyzer });
+  const eraser = new Eraser({ canvasId, dataProvider });
   const frequencyDisplay = new FrequencyDisplay({
     canvasId,
-    analyzerNode,
+    dataProvider,
   });
   const oscilloscope = new Oscilloscope({
     canvasId,
-    analyzerNode,
+    dataProvider,
   });
   // setup the event handler that is triggered every time enough samples have been collected
   // trigger the audio analysis and draw the results
@@ -64,6 +66,7 @@ document.querySelector("#start_button").addEventListener("click", function (e) {
     // draw the display if the audio is playing
     if (audioPlaying) {
       requestAnimFrame(() => {
+        dataProvider.update();
         eraser.draw();
         frequencyDisplay.draw();
         oscilloscope.draw();
@@ -87,13 +90,13 @@ document.querySelector("#stop_button").addEventListener("click", function (e) {
 
 function setupAudioNodes() {
   sourceNode = audioContext.createBufferSource();
-  analyzerNode = audioContext.createAnalyser();
-  analyzerNode.fftSize = 256;
+  analyzer = audioContext.createAnalyser();
+  analyzer.fftSize = 256;
   javascriptNode = audioContext.createScriptProcessor(sampleSize, 1, 1);
   // Now connect the nodes together
   sourceNode.connect(audioContext.destination);
-  sourceNode.connect(analyzerNode);
-  analyzerNode.connect(javascriptNode);
+  sourceNode.connect(analyzer);
+  analyzer.connect(javascriptNode);
   javascriptNode.connect(audioContext.destination);
 }
 
