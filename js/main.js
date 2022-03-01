@@ -1,5 +1,6 @@
 import Oscilloscope from "./visualizers/Oscilloscope.js";
 import FrequencyDisplay from "./visualizers/FrequencyDisplay.js";
+import Pulse from "./visualizers/Pulse.js";
 import Eraser from "./visualizers/Eraser.js";
 import DataProvider from "./DataProvider.js";
 import improveBrowserCompatibility from "./improveBrowserCompatibility.js";
@@ -38,6 +39,12 @@ document.getElementById(canvasId).addEventListener("click", function (e) {
       canvasId,
       dataProvider,
     });
+    const pulse = new Pulse({
+      canvasId,
+      dataProvider,
+      frequency: 50,
+      threshold: 128,
+    });
     // setup the event handler that is triggered every time enough samples have been collected
     // trigger the audio analysis and draw the results
     javascriptNode.onaudioprocess = function () {
@@ -48,6 +55,7 @@ document.getElementById(canvasId).addEventListener("click", function (e) {
           eraser.draw();
           frequencyDisplay.draw();
           oscilloscope.draw();
+          pulse.draw();
         });
       }
     };
