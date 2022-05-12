@@ -3,6 +3,7 @@ import FrequencyDisplay from "./visualizers/FrequencyDisplay.js";
 import Pulse from "./visualizers/Pulse.js";
 import Eraser from "./visualizers/Eraser.js";
 import DataProvider from "./DataProvider.js";
+import Resizer from "./Resizer.js";
 import improveBrowserCompatibility from "./improveBrowserCompatibility.js";
 import prepareCanvas from "./prepareCanvas.js";
 
@@ -20,7 +21,7 @@ let audioUrl = "./media/predatory-mollusc-jingle.ogg";
 let canvasId = "canvas";
 
 improveBrowserCompatibility();
-prepareCanvas(canvasId);
+// prepareCanvas(canvasId);
 
 // When the Start button is clicked, finish setting up the audio nodes, play the sound,
 // gather samples for the analysis, update the canvas
@@ -45,6 +46,8 @@ document.getElementById(canvasId).addEventListener("click", function (e) {
       frequency: 50,
       threshold: 128,
     });
+    const resizer = new Resizer({ canvasId });
+    resizer.start();
     // setup the event handler that is triggered every time enough samples have been collected
     // trigger the audio analysis and draw the results
     javascriptNode.onaudioprocess = function () {
